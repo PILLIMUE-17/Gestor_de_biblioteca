@@ -22,7 +22,9 @@ class SubcategoriaController extends Controller
             'codigo_subcategoria'  => 'nullable|string|max:10',
         ]);
 
-        return response()->json(Subcategoria::create($request->all()), 201);
+        $subcategoria = Subcategoria::create($request->all());
+        $subcategoria->load('categoria');
+        return response()->json($subcategoria, 201);
     }
 
     public function show($id)
@@ -48,6 +50,7 @@ class SubcategoriaController extends Controller
         ]);
 
         $subcategoria->update($request->all());
+        $subcategoria->load('categoria');
         return response()->json($subcategoria, 200);
     }
 

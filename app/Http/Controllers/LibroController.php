@@ -45,7 +45,7 @@ class LibroController extends Controller
     // metodo busca un libro por su id
     public function show($id)
     {
-        $libro = Libro::with(['autores', 'editorial', 'subcategoria', 'ejemplares'])->find($id);
+        $libro = Libro::with(['autores', 'editorial', 'subcategoria', 'ejemplares.donante'])->find($id);
 
         if (!$libro) {
             return response()->json(['message' => 'Libro no encontrado'], 404);

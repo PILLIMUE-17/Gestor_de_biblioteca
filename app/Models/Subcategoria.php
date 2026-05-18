@@ -6,16 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subcategoria extends Model
 {
-    //
-    protected $table = "subcategoria";
-    protected $primaryKey = 'id_subcategoria';
-    public $timestamps = false;
+    protected $table = 'subcategorias';
 
-    public function categoria(){
-        return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categorias');
+    protected $fillable = [
+        'categoria_id',
+        'nombre_subcategoria',
+        'codigo_subcategoria',
+    ];
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class, 'categoria_id');
     }
 
-    public function libros(){
-        return $this->hasMany(Libro::class, 'id_subcategoria', 'id_subcategoria');
+    public function libros()
+    {
+        return $this->hasMany(Libro::class, 'subcategoria_id');
     }
 }

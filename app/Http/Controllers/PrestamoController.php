@@ -8,13 +8,11 @@ use App\Models\Ejemplar;
 
 class PrestamoController extends Controller
 {
-    // metodo que devuelve una lista de todos los prestamos con sus relaciones
     public function index()
     {
         return Prestamo::with(['usuario', 'ejemplar.libro'])->get();
     }
 
-    // metodo que crea un nuevo prestamo
     public function store(Request $request)
     {
         $request->validate([
@@ -22,7 +20,19 @@ class PrestamoController extends Controller
             'usuario_id'  => 'required|exists:usuarios,id',
         ]);
 
-        // Validar límite de 10 préstamos activos por usuario
+        // Bloquear si el usuario tiene multas pendientes
+        $multaPendiente = Prestamo::where('usuario_id', $request->usuario_id)
+                                  ->where('multa', '>', 0)
+                                  ->where('multa_pagada', false)
+                                  ->exists();
+
+        if ($multaPendiente) {
+            return response()->json([
+                'message' => 'El usuario tiene multas pendientes de pago. No puede realizar nuevos préstamos hasta saldar su deuda.'
+            ], 400);
+        }
+
+        // Validar límite de 10 préstamos activos
         $prestamosActivos = Prestamo::where('usuario_id', $request->usuario_id)
                                     ->where('estado_prestamo', 'activo')
                                     ->count();
@@ -47,10 +57,14 @@ class PrestamoController extends Controller
         $prestamo->fecha_prestamo            = now();
         $prestamo->fecha_devolucion_esperada = now()->addDays(7);
         $prestamo->estado_prestamo           = 'activo';
+        $prestamo->multa                     = 0;
+        $prestamo->multa_pagada              = true;
         $prestamo->save();
 
         $ejemplar->estado_ejemplar = 'prestado';
         $ejemplar->save();
+
+        $prestamo->load(['usuario', 'ejemplar.libro']);
 
         return response()->json([
             'message'  => 'Préstamo registrado correctamente',
@@ -58,8 +72,7 @@ class PrestamoController extends Controller
         ], 201);
     }
 
-    // metodo que registra la devolución de un préstamo
-    public function devolver($id)
+    public function devolver(Request $request, $id)
     {
         $prestamo = Prestamo::find($id);
 
@@ -71,15 +84,62 @@ class PrestamoController extends Controller
             return response()->json(['message' => 'Este préstamo ya fue devuelto'], 400);
         }
 
+        $request->validate([
+            'estado_ejemplar' => 'sometimes|in:disponible,dañado,baja',
+        ]);
+
+        // Calcular multa por días de retraso
+        $fechaEsperada = new \DateTime(substr($prestamo->fecha_devolucion_esperada, 0, 10));
+        $fechaHoy      = new \DateTime(now()->toDateString());
+        $multa         = 0;
+        $diasRetraso   = 0;
+
+        if ($fechaHoy > $fechaEsperada) {
+            $diasRetraso = (int) $fechaHoy->diff($fechaEsperada)->days;
+            $multa       = $diasRetraso * 1000;
+        }
+
         $prestamo->fecha_devolucion_real = now();
         $prestamo->estado_prestamo       = 'devuelto';
+        $prestamo->multa                 = $multa;
+        $prestamo->multa_pagada          = ($multa === 0);
         $prestamo->save();
 
-        $prestamo->ejemplar->estado_ejemplar = 'disponible';
+        $estadoFinal = $request->estado_ejemplar ?? 'disponible';
+        $prestamo->ejemplar->estado_ejemplar = $estadoFinal;
         $prestamo->ejemplar->save();
 
+        $prestamo->load(['usuario', 'ejemplar.libro']);
+
         return response()->json([
-            'message'  => 'Devolución registrada correctamente',
+            'message'       => 'Devolución registrada correctamente',
+            'prestamo'      => $prestamo,
+            'dias_retraso'  => $diasRetraso,
+            'multa'         => $multa,
+        ]);
+    }
+
+    public function pagarMulta($id)
+    {
+        $prestamo = Prestamo::find($id);
+
+        if (!$prestamo) {
+            return response()->json(['message' => 'Préstamo no encontrado'], 404);
+        }
+
+        if ($prestamo->multa <= 0) {
+            return response()->json(['message' => 'Este préstamo no tiene multa'], 400);
+        }
+
+        if ($prestamo->multa_pagada) {
+            return response()->json(['message' => 'La multa ya fue pagada'], 400);
+        }
+
+        $prestamo->multa_pagada = true;
+        $prestamo->save();
+
+        return response()->json([
+            'message'  => 'Multa pagada correctamente',
             'prestamo' => $prestamo
         ]);
     }
@@ -101,10 +161,10 @@ class PrestamoController extends Controller
         }
 
         $request->validate([
-            'ejemplar_id' => 'sometimes|required|exists:ejemplares,id',
-            'usuario_id'  => 'sometimes|required|exists:usuarios,id',
+            'ejemplar_id'              => 'sometimes|required|exists:ejemplares,id',
+            'usuario_id'               => 'sometimes|required|exists:usuarios,id',
             'fecha_devolucion_esperada' => 'sometimes|date',
-            'estado_prestamo' => 'sometimes|in:activo,devuelto',
+            'estado_prestamo'          => 'sometimes|in:activo,devuelto',
         ]);
 
         if ($request->has('ejemplar_id') && $prestamo->ejemplar_id != $request->ejemplar_id) {
@@ -123,6 +183,7 @@ class PrestamoController extends Controller
         }
 
         $prestamo->update($request->all());
+        $prestamo->load(['usuario', 'ejemplar.libro']);
         return response()->json($prestamo, 200);
     }
 

@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('tipos_identificacion', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre_identificacion', 100);
+            $table->string('nombre_tipo_identificacion', 100)->unique();
+            $table->string('descripcion_tipo_identificacion', 255)->nullable();
             $table->timestamps();
         });
     }

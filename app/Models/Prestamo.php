@@ -16,6 +16,8 @@ class Prestamo extends Model
         'fecha_devolucion_esperada',
         'fecha_devolucion_real',
         'estado_prestamo',
+        'multa',
+        'multa_pagada',
     ];
 
     public function ejemplar()

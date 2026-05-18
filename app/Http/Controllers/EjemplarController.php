@@ -21,7 +21,7 @@ class EjemplarController extends Controller
     {
         $request->validate([
             'libro_id'  => 'required|exists:libros,id',
-            'cantidad'  => 'required|integer|min:1|max:50',
+            'cantidad'  => 'required|integer|min:1',
             'ubicacion_ejemplar' => 'nullable|string|max:100',
         ]);
 
@@ -91,6 +91,7 @@ class EjemplarController extends Controller
         }
 
         $ejemplar->update($request->all());
+        $ejemplar->load(['libro', 'donante']);
         return response()->json($ejemplar, 200);
     }
 

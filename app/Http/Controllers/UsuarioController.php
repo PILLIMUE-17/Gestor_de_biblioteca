@@ -10,7 +10,7 @@ class UsuarioController extends Controller
     //lista todos los usuarios con sus prestamos y los ejemplares prestados
     public function index()
     {
-        return Usuario::all();
+        return Usuario::with('tipoIdentificacion')->get();
     }
     //registra un lector nuevo, validando que el numero de identificacion y el email sean unicos
     public function store(Request $request)
@@ -26,13 +26,15 @@ class UsuarioController extends Controller
             'telefono_usuario'               => 'nullable|string|max:50',
         ]);
 
-        return response()->json(Usuario::create($request->all()), 201);
+        $usuario = Usuario::create($request->all());
+        $usuario->load('tipoIdentificacion');
+        return response()->json($usuario, 201);
     }
     //ver un usuario por su id; y su historial de prestamos con los ejemplares y libros relacionados
 
     public function show($id)
     {
-        $usuario = Usuario::with('prestamos.ejemplar.libro')->find($id);
+        $usuario = Usuario::with(['prestamos.ejemplar.libro', 'tipoIdentificacion'])->find($id);
 
         if (!$usuario) {
             return response()->json(['message' => 'Usuario no encontrado'], 404);
@@ -60,6 +62,7 @@ class UsuarioController extends Controller
         ]);
 
         $usuario->update($request->all());
+        $usuario->load('tipoIdentificacion');
         return response()->json($usuario, 200);
     }
 

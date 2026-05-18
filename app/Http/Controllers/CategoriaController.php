@@ -55,6 +55,12 @@ class CategoriaController extends Controller
             return response()->json(['message' => 'Categoría no encontrada'], 404);
         }
 
+        if ($categoria->subcategorias()->exists()) {
+            return response()->json([
+                'message' => 'No se puede eliminar esta categoría porque tiene subcategorías asociadas. Elimina primero las subcategorías.'
+            ], 400);
+        }
+
         $categoria->delete();
         return response()->json(['message' => 'Categoría eliminada correctamente'], 200);
     }

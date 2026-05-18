@@ -29,13 +29,13 @@ Route::put('/editoriales/{id}', [EditorialController::class,'update']);
 Route::delete('/editoriales/{id}', [EditorialController::class,'destroy']);
 
 // Libros
-Route::get   ('/libros',       [LibroController::class,'index']);
-Route::post  ('/libros',       [LibroController::class,'store']);
-Route::get   ('/libros/{id}',  [LibroController::class,'show']);
-Route::put   ('/libros/{id}',  [LibroController::class,'update']);
-Route::delete('/libros/{id}',  [LibroController::class,'destroy']);
-Route::get  ('/libros/buscar/avanzado',  [LibroController::class,'buscar']);
-Route::get  ('/libros/{id}/disponibilidad',  [LibroController::class,'disponibilidad']);
+Route::get   ('/libros',                     [LibroController::class,'index']);
+Route::post  ('/libros',                     [LibroController::class,'store']);
+Route::get   ('/libros/buscar/avanzado',     [LibroController::class,'buscar']);
+Route::get   ('/libros/{id}',                [LibroController::class,'show']);
+Route::put   ('/libros/{id}',                [LibroController::class,'update']);
+Route::delete('/libros/{id}',                [LibroController::class,'destroy']);
+Route::get   ('/libros/{id}/disponibilidad', [LibroController::class,'disponibilidad']);
 
 // Ejemplares
 Route::post('/ejemplares/lote',[EjemplarController::class,'ejemplarlote']);
@@ -58,7 +58,8 @@ Route::get('/usuarios/{id}/prestamos-devueltos', [UsuarioController::class,'pres
 Route::post('/prestamos',                [PrestamoController::class,'store']);
 Route::get ('/prestamos',                [PrestamoController::class,'index']);
 Route::get ('/prestamos/{id}',           [PrestamoController::class,'show']);
-Route::put ('/prestamos/{id}/devolver',  [PrestamoController::class,'devolver']);
+Route::put ('/prestamos/{id}/devolver',   [PrestamoController::class,'devolver']);
+Route::put ('/prestamos/{id}/pagar-multa',[PrestamoController::class,'pagarMulta']);
 Route::put ('/prestamos/{id}',           [PrestamoController::class,'update']);
 Route::delete('/prestamos/{id}',         [PrestamoController::class,'destroy']);
 

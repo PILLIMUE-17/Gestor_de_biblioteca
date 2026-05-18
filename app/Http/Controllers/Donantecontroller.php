@@ -13,11 +13,11 @@ class Donantecontroller extends Controller
     public function store (Request $request){
         $request->validate([
             "nombre_donante"=> "required|string|max:100",
-            "tipo_donante"=> "required|string|max:50",
+            "tipo_donante"=> "required|in:persona,empresa,institución",
             "telefono_donante"=> "nullable|string|max:20",
             "email_donante"=> "nullable|email|max:100",
         ]);
-        $donante = Donante::create($request->validated());
+        $donante = Donante::create($request->only(['nombre_donante','tipo_donante','telefono_donante','email_donante']));
         return response()->json($donante, 201);
     }
     public function ejemplares($id){
@@ -25,7 +25,7 @@ class Donantecontroller extends Controller
         if (!$donante) {
             return response()->json(['message' => 'Donante no encontrado'], 404);
         } 
-        return response()->json($donante->ejemplares);
+        return response()->json($donante->ejemplares()->with('libro')->get());
     }
     public function show($id){
         $donante = Donante::find($id);
@@ -42,11 +42,11 @@ class Donantecontroller extends Controller
         }
         $request->validate([
             "nombre_donante"=> "sometimes|string|max:100",
-            "tipo_donante"=> "sometimes|string|max:50",
+            "tipo_donante"=> "sometimes|in:persona,empresa,institución",
             "telefono_donante"=> "sometimes|string|max:20",
             "email_donante"=> "sometimes|email|max:100",
         ]);
-        $donante->update($request->validated());
+        $donante->update($request->only(['nombre_donante','tipo_donante','telefono_donante','email_donante']));
         return response()->json($donante,200);
 
     }
